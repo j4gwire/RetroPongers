@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Retro Pongers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-image: url('https://freevector-images.s3.amazonaws.com/uploads/vector/preview/41646/Vector4free-Triangular-retro-Background-DP1222_generated.jpg');
+      font-family: 'Press Start 2P', cursive;
+      text-align: center;
+    }
+
+    canvas {
+      background: black;
+      display: block;
+      margin: 20px auto;
+      z-index: 1;
+    }
+
+    h1 {
+      color: #00FF00; 
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    .description {
+      color: #FFFF00; 
+      font-size: 18px;
+      max-width: 600px;
+      margin-top: 10px;
+    }
+
+    .author {
+      color: #FF00FF; 
+      font-size: 18px;
+      margin-top: 5px;
+    }
+
+    /* Flash overlay */ 
+    .flash-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Retro Pongers!</h1>
+  <canvas id="pong" width="800" height="400"></canvas>
+  <div class="description">
+    Retro Pongers is a simple yet addictive game. Challenge yourself against the computer!
+  </div>
+  <div class="author" style="color: #ff5e00;"> 
+    Forked from <a href="https://github.com/thinkswell/javascript-mini-projects/tree/master/PingPongGame" target="_blank" style="color: #99ccff;">Thinkswell's Ping Pong Game</a> and modified by ScribeAegis 
+  </div>    
+  
+  <div class="flash-overlay" id="flashOverlay"></div>
+  <script>
+    const canvas = document.getElementById("pong");
+    const ctx = canvas.getContext("2d");
+
+    // Paddle variables
+    const paddleWidth = 10;
+    const paddleHeight = 100;
+    let playerY = canvas.height / 2 - paddleHeight / 2;
+    let computerY = canvas.height / 2 - paddleHeight / 2;
+    let computerSpeed = 7;
+
+    // Ball variables
+    const ballSize = 10;
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let ballSpeedX = 7;
+    let ballSpeedY = 7;
+
+    // Score variables
+    let playerScore = 0;
+    let computerScore = 0;
+
+    // Difficulty Level
+    let difficultyLevel = 1;
+
+    // Timer variables
+    let timeLeft = 30; // 30 seconds countdown
+    let gameOver = false;
+    let winner = "";
+
+    // Draw a rectangle
+    function drawRect(x, y, width, height, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
+    }
+
+    // Draw the ball
+    function drawBall(x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Draw the game
+    function draw() {
+      drawRect(0, 0, canvas.width, canvas.height, "black");
+      drawRect(0, playerY, paddleWidth, paddleHeight, "white");
+      drawRect(canvas.width - paddleWidth, computerY, paddleWidth, paddleHeight, "white");
+      drawBall(ballX, ballY, ballSize, "white");
+
+      ctx.fillStyle = "#00FF00";
+      ctx.font = "20px Arial";
+      ctx.fillText("Player: " + playerScore, 100, 50);
+      ctx.fillText("Computer: " + computerScore, canvas.width - 200, 50);
+
+      ctx.fillStyle = "#FFFF00";
+      ctx.fillText("Level: " + difficultyLevel, canvas.width / 2 - 40, 50);
+
+      ctx.fillStyle = "#FF00FF";
+      ctx.fillText("Time Left: " + Math.max(0, Math.ceil(timeLeft)), canvas.width - 200, 100);
+
+      if (gameOver) {
+        ctx.fillStyle = "white";
+        ctx.font = "40px Arial";
+        ctx.fillText(winner + " Wins!", canvas.width / 2 - 100, canvas.height / 2 - 40);
+        ctx.font = "20px Arial";
+        ctx.fillText("Final Score: Player " + playerScore + " - Computer " + computerScore, canvas.width / 2 - 160, canvas.height / 2);
+        ctx.fillText("Click to Restart", canvas.width / 2 - 80, canvas.height / 2 + 40);
+      }
+    }
+
+    function moveComputerPaddle() {
+      const computerYCenter = computerY + paddleHeight / 2;
+      if (computerYCenter < ballY - 35) {
+        computerY += computerSpeed;
+      } else if (computerYCenter > ballY + 35) {
+        computerY -= computerSpeed;
+      }
+    }
+
+    function update() {
+      if (gameOver) return;
+      moveComputerPaddle();
+
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
+
+      if (ballY - ballSize < 0 || ballY + ballSize > canvas.height) {
+        ballSpeedY = -ballSpeedY;
+      }
+
+      if (ballX - ballSize < 0) {
+        computerScore++;
+        flashScreen();
+        resetBall();
+      } else if (ballX + ballSize > canvas.width) {
+        playerScore++;
+        flashScreen();
+        resetBall();
+      }
+
+      if (
+        ballX - ballSize < paddleWidth &&
+        ballY > playerY &&
+        ballY < playerY + paddleHeight
+      ) {
+        ballSpeedX = -ballSpeedX;
+      } else if (
+        ballX + ballSize > canvas.width - paddleWidth &&
+        ballY > computerY &&
+        ballY < computerY + paddleHeight
+      ) {
+        ballSpeedX = -ballSpeedX;
+      }
+
+      adjustDifficulty();
+    }
+
+    function flashScreen() {
+      const overlay = document.getElementById("flashOverlay");
+      overlay.style.opacity = 1;
+      setTimeout(() => {
+        overlay.style.opacity = 0;
+      }, 150);
+    }
+
+    function resetBall() {
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+      ballSpeedX = 7 * (ballSpeedX > 0 ? 1 : -1);
+      ballSpeedY = (Math.random() * 6 + 4) * (ballSpeedY > 0 ? 1 : -1);
+    }
+
+    function adjustDifficulty() {
+      if (playerScore + computerScore >= 10) {
+        difficultyLevel = 3;
+        computerSpeed = 10;
+      } else if (playerScore + computerScore >= 5) {
+        difficultyLevel = 2;
+        computerSpeed = 8;
+      } else {
+        difficultyLevel = 1;
+        computerSpeed = 7;
+      }
+    }
+
+    function startTimer() {
+      const timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft -= 1;
+        } else {
+          clearInterval(timerInterval);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      gameOver = true;
+      winner = playerScore > computerScore ? "Player" : "Computer";
+      if (playerScore === computerScore) {
+        winner = "No one";
+      }
+    }
+
+    function gameLoop() {
+      draw();
+      update();
+      if (!gameOver) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    document.addEventListener("mousemove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseY = event.clientY - rect.top;
+      playerY = mouseY - paddleHeight / 2;
+
+      if (playerY < 0) playerY = 0;
+      if (playerY > canvas.height - paddleHeight) playerY = canvas.height - paddleHeight;
+    });
+
+    canvas.addEventListener("click", () => {
+      if (gameOver) {
+        playerScore = 0;
+        computerScore = 0;
+        timeLeft = 30;
+        gameOver = false;
+        startTimer();
+        gameLoop();
+      }
+    });
+
+    startTimer();
+    gameLoop();
+  </script>
+</body>
+</html>
