@@ -1,7 +1,7 @@
 # Retro Pongers
 
 ## Description
-A nostalgic twist on the classic ping pong game! Challenge yourself against a computer opponent in this simple yet addictive arcade style pong game.
+A nostalgic twist on the classic game! Challenge yourself against a computer opponent in this simple yet addictive arcade style pong game.
 
 ## Features
 - Two-player game (Player vs. Computer)
