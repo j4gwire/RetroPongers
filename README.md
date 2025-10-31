@@ -15,7 +15,7 @@ A nostalgic twist on the classic game! Challenge yourself against a computer opp
 2. Click to restart the game after it ends.
 
 ## Credits
-Forked from [Thinkswell's Ping Pong Game](https://github.com/thinkswell/javascript-mini-projects/tree/master/PingPongGame) and modified by j4gwire.
+Forked from [Thinkswell's Ping Pong Game](https://github.com/thinkswell/javascript-mini-projects/tree/master/PingPongGame) and modified.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
